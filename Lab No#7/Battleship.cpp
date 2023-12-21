@@ -11,10 +11,13 @@ BattleShips::BattleShips()
     ClearGrid();
     }
 
-void Boards::SetGridColor(int color)
-{
-    gridColor = color;
-}
+void Boards::setColor(int newColor) 
+    {
+    color = newColor;
+    }
+
+
+
 void BattleShips::ClearGrid() 
     {
     for (int y = 0; y < rows; y++) 
@@ -62,22 +65,95 @@ int BattleShips::numberOfShips()
        return c;
     }
 
-void BattleShips::setShips()    
-    {
+void BattleShips::setShips(bool isPlayer) 
+{
     int ships = 0;
 
     while (ships < maximumShips) 
         {
-        int xPos = rand() % 10;
-        int yPos = rand() % 10;
+        int xPos, yPos;
+        char direction;
 
-        if (matrix[xPos][yPos] != 1) 
+        if (isPlayer) 
             {
+            // For player, allow manual input for XY coordinate and direction
+            std::cout << "Enter the position for your ship " << ships + 1 << " (x y): ";
+            std::cin >> xPos >> yPos;
+
+            std::cout << "Enter the direction for your ship (H for horizontal, V for vertical): ";
+            std::cin >> direction;
+            }
+        else 
+            {
+            // For computer, generate random positions and directions
+            xPos = rand() % 10;
+            yPos = rand() % 10;
+            direction = (rand() % 2 == 0) ? 'H' : 'V'; // Randomly choose horizontal or vertical
+            }
+
+        // Check if the ship can be placed at the chosen position and direction
+
+        if (isValidPlacement(xPos, yPos, direction)) 
+            {
+            placeShip(xPos, yPos, direction);
             ships++;
-            matrix[xPos][yPos] = 1;
+            }
+        else 
+            {
+            std::cout << "Invalid placement. Try again." << std::endl;
             }
         }
     }
+
+bool BattleShips::isValidPlacement(int xPos, int yPos, char direction) 
+{
+    if (xPos < 0 || xPos >= rows || yPos < 0 || yPos >= columns) {
+        return false;
+    }
+
+    // Check if the ship exceeds the grid boundaries in the chosen direction
+    if ((direction == 'H' && yPos + maximumShips > columns) ||
+        (direction == 'V' && xPos + maximumShips > rows)) 
+        {
+        return false;
+        }
+
+    // Check for collisions with existing ships
+    for (int i = 0; i < maximumShips; ++i) 
+        {
+        if (direction == 'H' && matrix[xPos][yPos + i] == 1) 
+            {
+            return false; // Collision in the horizontal direction
+            }
+        if (direction == 'V' && matrix[xPos + i][yPos] == 1) 
+            {
+            return false; // Collision in the vertical direction
+            }
+        }
+
+    // If all checks pass, the placement is valid
+    return true;
+    }
+ 
+
+void BattleShips::placeShip(int xPos, int yPos, char direction) 
+    {
+    //Place the ship on the grid
+        for (int i = 0; i < maximumShips; ++i) 
+            {
+            if (direction == 'H') 
+                {
+                matrix[xPos][yPos + i] = 1; // Place the ship horizontally
+                }
+            else if (direction == 'V') 
+                {
+                matrix[xPos + i][yPos] = 1; // Place the ship vertically
+                }
+            }
+        matrix[xPos][yPos] = 1;
+    }
+
+
 
 bool BattleShips::Attack(int _x, int _y) 
     {
@@ -121,24 +197,25 @@ void Boards::updateBoards(bool i, int x, int y)
 void Boards::PrintBoards() 
     {
     int amt = 0;
-
-    // Use ANSI escape codes for text color
-    std::cout << "\033[" << gridColor << "m";  // Set text color
-
     std::cout << "  0 1 2 3 4 5 6 7 8 9" << std::endl;
 
-    for (int x = 0; x < rows; x++) 
+    // Set color using ANSI escape codes
+    std::cout << "\033[38;5;" << color << "m";
+
+    for (int x = 0; x < rows; x++)
         {
         std::cout << amt << " ";
         amt++;
-
-        for (int y = 0; y < columns; y++) 
-         {
+        for (int y = 0; y < columns; y++)
+            {
             std::cout << grid[x][y] << " ";
-         }
+            }
         std::cout << std::endl;
         }
 
-    // Reset text color to default
+    // Reset color to default
     std::cout << "\033[0m";
-    }
+}
+    
+   
+        
